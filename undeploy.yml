@@ -1,0 +1,29 @@
+---
+- name: Undeploy EC2 instances
+  hosts: localhost
+  gather_facts: no
+  vars:
+    awsregion: "us-west-1"
+    name_tag1: "Ansible1"
+    name_tag2: "Ansible2"
+  tasks:
+    - name: Terminate EC instance  with matching name tag
+      amazon.aws.ec2_instance:
+        state: absent
+        region: "{{ awsregion }}"
+        filters:
+          "tag:Name": "{{ name_tag1 }}"
+        wait: yes
+      register: terminated_instance1
+      when: name_tag1 is defined
+
+    - name: Terminate EC2 instance 2 with matching name tag
+      amazon.aws.ec2_instance:
+        state: absent
+        region: "{{ awsregion }}"
+        filters:
+          "tag:Name": "{{ name_tag2 }}"
+        wait: yes
+      register: terminated_instance2
+      when: name_tag2 is defined
+

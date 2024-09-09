@@ -1,0 +1,31 @@
+# ---
+- name: Deploy web server on VMs
+  hosts: localhost
+  gather_facts: no
+  vars:
+    # Define a dictionary with public IPs and messages
+    webserver_info:
+      vm1:
+        public_ip: "54.193.21.43"
+        message: "Hello World from SJSU-1"
+      vm2:
+        public_ip: "3.101.29.245"
+        message: "Hello World from SJSU-2"
+    private_key_path: "./Ansible-key.pem"  # Path to your private key file
+
+  tasks:
+    - name: Generate and run the user data script to configure web server
+      shell: |
+        # Loop through the dictionary
+        {% for vm, info in webserver_info.items() %}
+        ssh -i {{ private_key_path }} -o StrictHostKeyChecking=no ec2-user@{{ info.public_ip }} << 'EOF'
+        sudo yum update -y
+        sudo yum install -y httpd
+        echo "{{ info.message }}" | sudo tee /var/www/html/index.html
+        sudo sed -i 's/^Listen 80$/Listen 8080/' /etc/httpd/conf/httpd.conf
+        sudo systemctl restart httpd
+        sudo systemctl enable httpd
+        EOF
+        {% endfor %}
+      args:
+        executable: /bin/bash
